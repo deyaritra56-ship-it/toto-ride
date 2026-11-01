@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Toto Ride | Customer Booking</title>
+<style>
+:root{--ink:#10251f;--lime:#b8f36b;--bg:#f3f6f1;--muted:#68766f;--line:#dfe7de}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,"Noto Sans Bengali",sans-serif}.wrap{width:min(680px,92%);margin:auto}header,.hero{background:var(--ink);color:white}header{padding:17px 0}.logo{font-size:1.3rem;font-weight:900}.logo span{color:var(--lime)}.hero{padding:34px 0 38px}.hero h1{font-size:2.4rem;line-height:1.1;margin:10px 0}.hero p{color:#d1ddd6;line-height:1.6}.tag{color:var(--lime);font-size:.78rem;font-weight:800}.card{background:white;border:1px solid var(--line);border-radius:20px;padding:23px;margin:25px 0;box-shadow:0 12px 30px #10251f0c}h2{margin:0 0 15px}label{display:block;font-weight:750;margin:12px 0 6px;font-size:.9rem}input,textarea{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;font:inherit}input:focus,textarea:focus{outline:2px solid var(--lime)}.opts{display:flex;gap:10px}.opts label{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px}.opts input{width:auto}.btn{border:0;background:var(--lime);color:var(--ink);font-weight:850;padding:14px;border-radius:999px;width:100%;margin-top:18px;font-size:1rem}.muted{font-size:.82rem;color:var(--muted);line-height:1.55}.notice{background:#eff7e9;padding:14px;border-radius:12px;margin-top:14px;overflow-wrap:anywhere}.qr{text-align:center;border:1px solid var(--line);padding:15px;border-radius:14px;margin-top:14px}.qr canvas,.qr img{margin:12px auto}footer{padding:22px 0;color:var(--muted);font-size:.8rem}
+</style></head><body>
+<header><div class="wrap logo">🛺 TOTO <span>RIDE</span></div></header>
+<section class="hero"><div class="wrap"><div class="tag">LOCAL TOTO BOOKING</div><h1>আপনার যাত্রা,<br><span style="color:var(--lime)">সহজ ও স্বচ্ছ।</span></h1><p>Booking পাঠান। Owner ভাড়া নির্ধারণ করবেন। তারপর Cash অথবা Online payment করুন।</p></div></section>
+<main class="wrap"><section class="card"><h2>Book your Toto</h2>
+<form id="form">
+<label>আপনার নাম</label><input id="name" required maxlength="70" placeholder="নাম লিখুন">
+<label>আপনার মোবাইল নম্বর</label><input id="phone" required inputmode="tel" pattern="[0-9+ -]{10,15}" placeholder="নিজের মোবাইল নম্বর">
+<label>Pickup Location</label><input id="pickup" required maxlength="160" placeholder="কোথা থেকে উঠবেন">
+<label>Destination</label><input id="destination" required maxlength="160" placeholder="কোথায় যাবেন">
+<label>Payment option</label><div class="opts"><label><input type="radio" name="payment" value="Cash" required> 💵 Cash</label><label><input type="radio" name="payment" value="Online"> 📱 Online</label></div>
+<label>অতিরিক্ত তথ্য (ঐচ্ছিক)</label><textarea id="notes" rows="2" maxlength="400" placeholder="বিশেষ তথ্য"></textarea>
+<button class="btn">Booking Request পাঠান</button><p class="muted">ভাড়ার পরিমাণ Customer দেবেন না। Owner পরে ভাড়া নির্ধারণ করবেন।</p>
+</form><div id="result" class="notice" hidden></div></section></main>
+<footer><div class="wrap">Toto Ride • Customer Booking</div></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const API=(location.protocol==="file:"?"http://localhost:3000":location.origin);
+const $=id=>document.getElementById(id);let currentId=null;
+$("form").addEventListener("submit",async e=>{e.preventDefault();const payload={name:$("name").value.trim(),phone:$("phone").value.trim(),pickup:$("pickup").value.trim(),destination:$("destination").value.trim(),payment:document.querySelector('input[name="payment"]:checked').value,notes:$("notes").value.trim()};
+const r=$("result");r.hidden=false;r.textContent="Booking পাঠানো হচ্ছে...";
+try{const res=await fetch(API+"/api/bookings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw Error(data.error||"Booking পাঠানো যায়নি");currentId=data.id;r.innerHTML=`<b>Booking সফল হয়েছে!</b><br>Booking ID: <b>${data.id}</b><br>Owner ভাড়া নির্ধারণ করলে এই পেজে দেখা যাবে। এই Booking ID সংরক্ষণ করে রাখুন।`;e.target.reset();pollStatus()}catch(err){r.textContent="সমস্যা: "+err.message+"। Website server চালু আছে কি না দেখুন।"}
+});
+async function pollStatus(){if(!currentId)return;try{const res=await fetch(API+"/api/bookings/"+encodeURIComponent(currentId));if(!res.ok)return;const b=await res.json();const r=$("result");if(b.fare!=null){r.innerHTML=`<b>আপনার ভাড়া নির্ধারিত হয়েছে</b><br>Booking ID: ${b.id}<br><strong style="font-size:1.5rem">₹${b.fare}</strong><br>Payment: ${b.payment}`;
+if(b.payment==="Online"){const uri=`upi://pay?pa=deyaritra56@oksbi&pn=Aritra%20Dey&am=${encodeURIComponent(b.fare)}&cu=INR&tn=${encodeURIComponent("Toto Ride "+b.id)}`;r.innerHTML+=`<div class="qr"><b>Scan করে ₹${b.fare} পেমেন্ট করুন</b><div id="qrcode"></div><div class="muted">UPI ID: deyaritra56@oksbi<br>পেমেন্টের আগে UPI app-এ Payee ও Amount মিলিয়ে নিন।</div></div>`;if(window.QRCode)new QRCode(document.getElementById("qrcode"),{text:uri,width:190,height:190});}
+else r.innerHTML+="<br>Cash হলে যাত্রার শেষে Owner-কে দিন।";
+if(b.cashStatus)r.innerHTML+="<br>Cash status: "+b.cashStatus;
+}}catch(e){}}
+setInterval(pollStatus,8000);
+</script></body></html>
